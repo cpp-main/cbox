@@ -1,0 +1,34 @@
+# cbox configuration file
+
+# Set the include directories for this library
+set(cbox_INCLUDE_DIRS
+    "${CMAKE_INSTALL_PREFIX}/include/cbox"
+)
+
+# Set the library directories for this library
+set(cbox_LIB_DIRS
+    "${CMAKE_INSTALL_PREFIX}/lib/cbox"
+)
+
+# Set the libraries for this library
+#set(cbox_LIBS
+    #"${CMAKE_INSTALL_PREFIX}/lib/libcbox.so"
+#)
+
+# Create an imported target for this library
+add_library(cbox SHARED IMPORTED)
+
+# Set the include directories for this target
+set_target_properties(cbox PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${cbox_INCLUDE_DIRS}"
+)
+
+# Set the library directories for this target
+set_target_properties(cbox PROPERTIES
+    IMPORTED_LOCATION "${cbox_LIBS}"
+)
+
+# Export the target from this package
+export(TARGETS cbox
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/cbox-targets.cmake"
+)
