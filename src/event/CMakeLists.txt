@@ -11,16 +11,22 @@ add_definitions(-DLOG_MODULE_ID="cbox.event")
 
 set(CBOX_EVENT_HEADERS
     loop.h
+    fd_event.h
+    signal_event.h
     timer.h)
 
 set(CBOX_EVENT_SOURCES
     loop.c
+    fd_event.c
+    signal_event.c
     timer.c
     delegator.c)
 
 set(CBOX_EVENT_TEST_SOURCES
-    timer_test.cpp
-    loop_test.cpp)
+    loop_test.cpp
+    fd_event_test.cpp
+    signal_event_test.cpp
+    timer_test.cpp)
 
 add_library(${PROJECT_NAME} ${CBOX_BUILD_LIB_TYPE} ${CBOX_EVENT_SOURCES})
 
@@ -31,7 +37,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 if(${CBOX_ENABLE_TEST})
     add_executable(${PROJECT_NAME}_test ${CBOX_EVENT_TEST_SOURCES})
 
-    target_link_libraries(${PROJECT_NAME}_test gmock_main gmock gtest pthread ${PROJECT_NAME} rt dl)
+    target_link_libraries(${PROJECT_NAME}_test gmock_main gmock gtest pthread ${PROJECT_NAME} cbox_base rt dl)
     add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
 endif()
 

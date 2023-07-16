@@ -1,6 +1,7 @@
 #ifndef _CBOX_TIMER_H_2023_
 #define _CBOX_TIMER_H_2023_
 
+#include <time.h>
 #include <cbox/event/loop.h>
 
 #if defined (__cplusplus)

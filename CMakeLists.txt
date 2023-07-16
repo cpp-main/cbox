@@ -50,7 +50,7 @@ option(CBOX_ENABLE_EVENT "build event" ON)
 #
 # TESTS
 #
-option(CMAKE_ENABLE_TEST "Whether to enable unit tests" OFF)
+option(CMAKE_ENABLE_TEST "Whether to enable unit tests" ON)
 
 if(CMAKE_ENABLE_TEST)
     message(STATUS "Unit tests enabled")

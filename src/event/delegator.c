@@ -3,10 +3,11 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/eventfd.h>
-#include <cbox/base/list.h>
-#include <cbox/base/macros.h>
+#include "base/list.h"
+#include "base/macros.h"
 
 #include "delegator.h"
+#include "fd_event.h"
 
 #define DQUEUE_POP_FRONT(head, type_of_struct, member_name) ({\
         type_of_struct *temp = list_entry(((head)->next), type_of_struct, member_name); \
@@ -32,7 +33,7 @@ struct cbox_delegator
     int has_commit_run_req;
 };
 
-static void cbox_on_fd_event(uint32_t events, void *user);
+static void cbox_on_fd_event(int fd, uint32_t events, void *user);
 static void cbox_commit_run_request(cbox_delegator_t *);
 static void cbox_finish_run_request(cbox_delegator_t *de);
 
@@ -47,13 +48,13 @@ cbox_delegator_t *cbox_delegator_new(cbox_loop_t *loop)
     if (fd <= 0 )
         goto error;
 
-    delegator->fd_event = cbox_fd_event_new(fd, CBOX_EVENT_READ, cbox_on_fd_event, delegator);
+    delegator->fd_event = cbox_fd_event_new(loop, fd, CBOX_EVENT_READ, cbox_on_fd_event, CBOX_RUN_MODE_FOREVER, delegator);
     if (delegator->fd_event == NULL)
         goto error;
 
     delegator->has_commit_run_req = 0;
 
-    if (cbox_loop_fd_event_add(loop, delegator->fd_event) < 0)
+    if (cbox_fd_event_enable(delegator->fd_event) < 0)
         goto error;
 
     INIT_LIST_HEAD(&delegator->function_queue);
@@ -73,7 +74,7 @@ void cbox_delegator_delete(cbox_delegator_t *delegator)
         return;
 
     if (delegator->fd_event) {
-        cbox_loop_fd_event_remove(delegator->loop, delegator->fd_event);
+        cbox_fd_event_disable(delegator->fd_event);
         cbox_fd_event_delete(delegator->fd_event);
     }
 
@@ -110,7 +111,7 @@ void cbox_delegator_delegate(cbox_delegator_t *de, cbox_run_in_loop_func_t cb, v
     }
 }
 
-void cbox_on_fd_event(uint32_t events, void *user)
+void cbox_on_fd_event(int fd, uint32_t events, void *user)
 {
     cbox_delegator_t *de = (cbox_delegator_t *)user;
     if (!user || events != CBOX_EVENT_READ)
@@ -133,6 +134,8 @@ void cbox_on_fd_event(uint32_t events, void *user)
 
         CBOX_SAFETY_FREE(node);
     }
+
+    (void)fd;
 }
 
 static void cbox_commit_run_request(cbox_delegator_t *de)

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/timerfd.h>
 #include <cbox/base/macros.h>
+#include "fd_event.h"
 #include "timer.h"
 
 struct cbox_timer
@@ -17,7 +18,7 @@ struct cbox_timer
 };
 
 static int cbox_timer_create_timerfd();
-static void on_cbox_timerfd_timeout(uint32_t, void *);
+static void on_cbox_timerfd_timeout(int, uint32_t, void *);
 
 cbox_timer_t *cbox_timer_new(cbox_loop_t *loop, struct timespec *ts, int repeat, cbox_timeout_func_t cb, void *user)
 {
@@ -46,7 +47,7 @@ cbox_timer_t *cbox_timer_new(cbox_loop_t *loop, struct timespec *ts, int repeat,
         if (fd < 0)
             goto error;
 
-        timer->fd_timer = cbox_fd_event_new(fd, CBOX_EVENT_READ, on_cbox_timerfd_timeout, timer);
+        timer->fd_timer = cbox_fd_event_new(loop, fd, CBOX_EVENT_READ, on_cbox_timerfd_timeout, CBOX_RUN_MODE_FOREVER, timer);
         if (timer->fd_timer == NULL)
             goto error;
     }
@@ -72,7 +73,7 @@ void cbox_timer_delete(cbox_timer_t *timer)
         if (timer->basic_timer)
             cbox_basic_timer_disable(timer->loop, timer->basic_timer);
         if (timer->fd_timer) {
-            cbox_loop_fd_event_remove(timer->loop, timer->fd_timer);
+            cbox_fd_event_disable(timer->fd_timer);
             close(cbox_fd_event_fd(timer->fd_timer));
         }
         timer->enabled = 0;
@@ -105,7 +106,7 @@ int cbox_timer_enable(cbox_timer_t *timer)
             return ret;
     }
 
-    ret = timer->basic_timer ? cbox_basic_timer_enable(timer->loop, timer->basic_timer) : cbox_loop_fd_event_add(timer->loop, timer->fd_timer);
+    ret = timer->basic_timer ? cbox_basic_timer_enable(timer->loop, timer->basic_timer) : cbox_fd_event_enable(timer->fd_timer);
 
     timer->enabled = (ret == 0) ? 1 : 0;
 
@@ -137,7 +138,7 @@ int cbox_timer_disable(cbox_timer_t *timer)
             return ret;
     }
 
-    ret = timer->basic_timer ? cbox_basic_timer_disable(timer->loop, timer->basic_timer) : cbox_loop_fd_event_remove(timer->loop, timer->fd_timer);
+    ret = timer->basic_timer ? cbox_basic_timer_disable(timer->loop, timer->basic_timer) : cbox_fd_event_disable(timer->fd_timer);
 
     timer->enabled = (ret == 0) ? 0 : 1;
 
@@ -149,7 +150,7 @@ static int cbox_timer_create_timerfd()
     return timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 }
 
-static void on_cbox_timerfd_timeout(uint32_t event, void *user)
+static void on_cbox_timerfd_timeout(int fd, uint32_t event, void *user)
 {
     cbox_timer_t *timer = (cbox_timer_t *)user;
     if (event & CBOX_EVENT_READ) {
@@ -166,4 +167,5 @@ static void on_cbox_timerfd_timeout(uint32_t event, void *user)
             cbox_timer_disable(timer);
 
     }
+    (void)fd;
 }

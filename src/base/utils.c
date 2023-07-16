@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <syscall.h>
+#include <unistd.h>
 #include "macros.h"
 #include "utils.h"
 
@@ -180,5 +181,22 @@ RET:
     if(contents) free(contents);
 
     return ret;
+}
+
+int cbox_utils_create_pair_fd(int *readfd, int *writefd)
+{
+    int pipefd[2];
+    if (pipe(pipefd) != 0)
+        return 0;
+
+    int flags = fcntl(pipefd[0], F_GETFL); 
+    fcntl(pipefd[0], F_SETFL, flags | O_NONBLOCK | FD_CLOEXEC);
+
+    flags = fcntl(pipefd[1], F_GETFL);
+    fcntl(pipefd[1], F_SETFL, flags | O_NONBLOCK | FD_CLOEXEC);
+
+    *readfd = pipefd[0];
+    *writefd = pipefd[1];
+    return 1;
 }
 

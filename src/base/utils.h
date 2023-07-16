@@ -86,6 +86,14 @@ void cbox_utils_perform(const char *cmd, void (*handler)(const char *, const voi
  */
 int cbox_utils_copy_file(const char *dest, const char *src);
 
+/*
+ * @brief create pair fd event with pipe
+ *
+ * @return 1: succeed
+ * @return 0: failed
+ */
+int cbox_utils_create_pair_fd(int *readfd, int *writefd);
+
 #if defined (__cplusplus)
 }
 #endif

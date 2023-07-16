@@ -11,10 +11,27 @@ add_definitions(-DLOG_MODULE_ID="cbox.base")
 
 set(CBOX_BASE_HEADERS
     macros.h
-    utils.h)
+    utils.h
+    list.h
+    rbtree.h
+    pbl.h)
 
 set(CBOX_BASE_SOURCES
-    utils.c)
+    utils.c
+    rbtree.c
+    pbl/src/pblCgi.c
+    pbl/src/pblStringBuilder.c
+    pbl/src/pblPriorityQueue.c
+    pbl/src/pblHeap.c
+    pbl/src/pblMap.c
+    pbl/src/pblSet.c
+    pbl/src/pblList.c
+    pbl/src/pblCollection.c
+    pbl/src/pblIterator.c
+    pbl/src/pblisam.c
+    pbl/src/pblkf.c
+    pbl/src/pblhash.c
+    pbl/src/pbl.c)
 
 set(CBOX_BASE_TEST_SOURCES
     utils_test.cpp)

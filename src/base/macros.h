@@ -13,6 +13,10 @@
 #define CBOX_SAFETY_FUNC(f, a) do { if (a) { f(a); a = NULL; } } while (0)
 #endif
 
+#ifndef CBOX_ARRAY_SIZE
+#define CBOX_ARRAY_SIZE(x) sizeof(x) / sizeof(x[0])
+#endif
+
 
 #ifndef TEMP_FAILURE_RETRY
 # define TEMP_FAILURE_RETRY(expression)         \
