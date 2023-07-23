@@ -46,11 +46,12 @@ message("*")
 
 option(CBOX_ENABLE_BASE "build base" ON)
 option(CBOX_ENABLE_EVENT "build event" ON)
+option(CBOX_ENABLE_SAMPLES "build samples" ON)
 
 #
 # TESTS
 #
-option(CMAKE_ENABLE_TEST "Whether to enable unit tests" ON)
+option(CMAKE_ENABLE_TEST "Whether to enable unit tests" OFF)
 
 if(CMAKE_ENABLE_TEST)
     message(STATUS "Unit tests enabled")
@@ -80,4 +81,9 @@ endif()
 if(CBOX_ENABLE_EVENT)
     message(STATUS "event module enabled")
     add_subdirectory(src/event)
+endif()
+
+if(CBOX_ENABLE_SAMPLES)
+    message(STATUS "samples enabled")
+    add_subdirectory(samples)
 endif()

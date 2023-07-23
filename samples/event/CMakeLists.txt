@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.15)
+add_executable(loop_example loop_example.c)
+add_executable(fd_example fd_example.c)
+add_executable(timer_example timer_example.c)
+add_executable(signal_example signal_example.c)
+
+target_link_libraries(loop_example cbox_event cbox_base pthread)
+target_link_libraries(fd_example cbox_event cbox_base pthread)
+target_link_libraries(timer_example cbox_event cbox_base pthread)
+target_link_libraries(signal_example cbox_event cbox_base pthread)

@@ -14,11 +14,13 @@ set(CBOX_BASE_HEADERS
     utils.h
     list.h
     rbtree.h
+    log.h
     pbl.h)
 
 set(CBOX_BASE_SOURCES
     utils.c
     rbtree.c
+    log.c
     pbl/src/pblCgi.c
     pbl/src/pblStringBuilder.c
     pbl/src/pblPriorityQueue.c
@@ -34,6 +36,7 @@ set(CBOX_BASE_SOURCES
     pbl/src/pbl.c)
 
 set(CBOX_BASE_TEST_SOURCES
+    log_test.cpp
     utils_test.cpp)
 
 add_library(${PROJECT_NAME} ${CBOX_BUILD_LIB_TYPE} ${CBOX_BASE_SOURCES})

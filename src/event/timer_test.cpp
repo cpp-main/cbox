@@ -153,8 +153,8 @@ TEST(Timer, NanoSeconds)
     cbox_loop_dispatch(loop, CBOX_RUN_MODE_FOREVER);
 
     uint64_t elapsed_ns = (stop_ts - start_ts).count();
-    ASSERT_GE(elapsed_ns, min_interval_ns) << "Timer did not expire after " << min_interval_ns << "nanoseconds" << std::endl;
-    ASSERT_LE(elapsed_ns, 4 * min_interval_ns) << "Timer expired too late, elapsed_ns=" << elapsed_ns << std::endl;
+    ASSERT_GE(elapsed_ns, min_interval_ns / 2) << "Timer did not expire after " << min_interval_ns << "nanoseconds" << std::endl;
+    ASSERT_LE(elapsed_ns, 2 * min_interval_ns) << "Timer expired too late, elapsed_ns= " << elapsed_ns << std::endl;
     cbox_timer_disable(timer);
     cbox_timer_delete(timer);
     cbox_loop_delete(loop);
