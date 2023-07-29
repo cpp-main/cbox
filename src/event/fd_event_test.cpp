@@ -163,3 +163,24 @@ TEST_F(FdEventTest, Exception)
     ASSERT_TRUE(g_exception);
 }
 
+/// Test modify events
+TEST_F(FdEventTest, Modify)
+{
+    int fd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+    ASSERT_TRUE(fd > 0);
+    
+    uint32_t events = CBOX_EVENT_WRITE;
+    cbox_fd_event_t *event = cbox_fd_event_new(loop, fd, events, NULL, CBOX_RUN_MODE_FOREVER, NULL);
+    ASSERT_TRUE(event != NULL);
+    EXPECT_EQ(events, cbox_fd_event_events(event));
+
+    uint32_t new_events = CBOX_EVENT_READ | CBOX_EVENT_EXCEPTION;
+
+    int ret = cbox_fd_event_modify(event, new_events);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(new_events, cbox_fd_event_events(event));
+    EXPECT_EQ(0, cbox_fd_event_enabled(event));
+    cbox_fd_event_enable(event);
+    EXPECT_EQ(1, cbox_fd_event_enabled(event));
+    cbox_fd_event_delete(event);
+}

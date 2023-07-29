@@ -22,7 +22,10 @@ void cbox_fd_event_delete(cbox_fd_event_t * /*event*/);
 int cbox_fd_event_enable(cbox_fd_event_t * /*event*/);
 int cbox_fd_event_disable(cbox_fd_event_t * /*event*/);
 int cbox_fd_event_enabled(cbox_fd_event_t * /*event*/);
+int cbox_fd_event_modify(cbox_fd_event_t */*obj*/, uint32_t /*new_events*/);
+
 int cbox_fd_event_fd(cbox_fd_event_t * /*event*/);
+uint32_t cbox_fd_event_events(cbox_fd_event_t * /*event*/);
 
 #if defined (__cplusplus)
 }

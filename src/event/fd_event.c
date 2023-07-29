@@ -32,6 +32,7 @@ struct cbox_fd_event
 };
 
 static inline uint32_t cbox_events_to_epoll_events(uint32_t /*cbox_events*/);
+static inline uint32_t epoll_events_to_cbox_events(uint32_t /*cbox_events*/);
 static void cbox_fd_event_unref_shared_data(cbox_fd_event_t *event);
 static void cbox_fd_event_reload(cbox_fd_event_t *event);
 static void trigger_event_callback(cbox_fd_event_t *obj, uint32_t event);
@@ -165,11 +166,34 @@ int cbox_fd_event_enabled(cbox_fd_event_t *event)
     return event->enabled;
 }
 
+int cbox_fd_event_modify(cbox_fd_event_t *obj, uint32_t new_events)
+{
+    if (obj == NULL)
+        return -1;
+
+    int before_enabled = obj->enabled;
+    obj->events = cbox_events_to_epoll_events(new_events);
+
+    if (before_enabled)
+        cbox_fd_event_disable(obj);
+
+    if (before_enabled)
+        cbox_fd_event_enable(obj);
+
+    return 0;
+}
+
 int cbox_fd_event_fd(cbox_fd_event_t *event)
 {
     if (NULL == event) return -1;
 
     return event->fd;
+}
+
+
+uint32_t cbox_fd_event_events(cbox_fd_event_t *event)
+{
+    return epoll_events_to_cbox_events(event->events);
 }
 
 void cbox_fd_event_on_event(uint32_t events, void *ptr)
@@ -213,6 +237,21 @@ static inline uint32_t cbox_events_to_epoll_events(uint32_t cbox_events)
 
     if (cbox_events & CBOX_EVENT_EXCEPTION)
         events |= (EPOLLERR | EPOLLHUP);
+
+    return events;
+}
+
+static inline uint32_t epoll_events_to_cbox_events(uint32_t epoll_events)
+{
+    uint32_t events = 0;
+    if (epoll_events & EPOLLIN)
+        events |= CBOX_EVENT_READ;
+
+    if (epoll_events & EPOLLOUT)
+        events |= CBOX_EVENT_WRITE;
+
+    if (epoll_events & EPOLLERR || epoll_events & EPOLLHUP)
+        events |= CBOX_EVENT_EXCEPTION;
 
     return events;
 }
