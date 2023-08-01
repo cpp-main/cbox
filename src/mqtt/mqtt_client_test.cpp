@@ -37,6 +37,7 @@ void connected_cb(bool connected, void* user)
 {
     auto test_instance = static_cast<MqttClient*>(user);
     test_instance->ConnectedCallback(connected, user);
+    cbox_loop_exit(test_instance->loop_);
 }
 
 
@@ -45,4 +46,6 @@ TEST_F(MqttClient, Connected) {
     EXPECT_CALL(*this, ConnectedCallback(expected_connected, this)).Times(Exactly(1));
     EXPECT_FALSE(cbox_mqtt_client_connected(mqtt_));
     cbox_mqtt_client_enable(mqtt_);
+    cbox_loop_dispatch(loop_, CBOX_RUN_MODE_FOREVER);
+    EXPECT_FALSE(cbox_mqtt_client_connected(mqtt_));
 }

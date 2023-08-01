@@ -92,5 +92,6 @@ int main(int argc, char **argv)
     CBOX_LOG_DESTROY();
     // after destroy we should not call LOG's function any more   
     (void)argc;
+    (void)ret;
     return 0;
 }

@@ -19,7 +19,7 @@ extern "C"
 
 cbox_mqtt_client_t *cbox_mqtt_client_new(cbox_loop_t *loop,
                         const char *client_id,
-                        const char *broker_host,
+                        const char *broker_ip,
                         uint16_t broker_port,
                         int keepalive,
                         cbox_mqtt_client_connected_func_t connected,

@@ -34,7 +34,7 @@ project(
 )
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 set(CBOX_BUILD_LIB_TYPE STATIC)
@@ -46,6 +46,7 @@ message("*")
 
 option(CBOX_ENABLE_BASE "build base" ON)
 option(CBOX_ENABLE_EVENT "build event" ON)
+option(CBOX_ENABLE_MQTT "build mqtt" ON)
 option(CBOX_ENABLE_SAMPLES "build samples" ON)
 
 #
@@ -81,6 +82,11 @@ endif()
 if(CBOX_ENABLE_EVENT)
     message(STATUS "event module enabled")
     add_subdirectory(src/event)
+endif()
+
+if(CBOX_ENABLE_MQTT)
+    message(STATUS "mqtt module enabled")
+    add_subdirectory(src/mqtt)
 endif()
 
 if(CBOX_ENABLE_SAMPLES)

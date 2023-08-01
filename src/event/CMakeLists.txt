@@ -13,20 +13,23 @@ set(CBOX_EVENT_HEADERS
     loop.h
     fd_event.h
     signal_event.h
-    timer.h)
+    timer.h
+    worker.h)
 
 set(CBOX_EVENT_SOURCES
     loop.c
     fd_event.c
     signal_event.c
     timer.c
-    delegator.c)
+    delegator.c
+    worker.c)
 
 set(CBOX_EVENT_TEST_SOURCES
     loop_test.cpp
     fd_event_test.cpp
     signal_event_test.cpp
-    timer_test.cpp)
+    timer_test.cpp
+    worker_test.cpp)
 
 add_library(${PROJECT_NAME} ${CBOX_BUILD_LIB_TYPE} ${CBOX_EVENT_SOURCES})
 

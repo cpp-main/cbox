@@ -15,6 +15,7 @@ set(CBOX_BASE_HEADERS
     list.h
     rbtree.h
     log.h
+    dqueue.h
     pbl.h)
 
 set(CBOX_BASE_SOURCES

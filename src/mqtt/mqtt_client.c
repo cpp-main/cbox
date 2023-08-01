@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
 
@@ -10,6 +11,7 @@
 #include "event/fd_event.h"
 #include "base/log.h"
 #include "base/macros.h"
+#include "event/worker.h"
 
 struct cbox_mqtt_client_s {
     cbox_loop_t *loop;
@@ -24,7 +26,7 @@ struct cbox_mqtt_client_s {
     bool enabled;
 
     char *client_id;
-    char *broker_host;
+    char *broker_ip;
     char *user_name;
     char *password;
     uint16_t broker_port;
@@ -122,7 +124,7 @@ void mqtt_unsubscribe(cbox_mqtt_client_t *client, const char *topic, int *mid)
 
 cbox_mqtt_client_t *cbox_mqtt_client_new(cbox_loop_t *loop,
                                          const char *client_id,
-                                         const char *broker_host,
+                                         const char *broker_ip,
                                          uint16_t broker_port,
                                          int keepalive,
                                          cbox_mqtt_client_connected_func_t connected,
@@ -130,7 +132,7 @@ cbox_mqtt_client_t *cbox_mqtt_client_new(cbox_loop_t *loop,
                                          cbox_mqtt_client_message_func_t message,
                                          void *user)
 {
-    assert(loop != NULL && client_id != NULL && broker_host != NULL);
+    assert(loop != NULL && client_id != NULL && broker_ip != NULL);
 
     if (g_mosquitto_instance_count == 0)
         mosquitto_lib_init();
@@ -148,7 +150,7 @@ cbox_mqtt_client_t *cbox_mqtt_client_new(cbox_loop_t *loop,
     client->enabled = false;
 
     client->client_id = client_id ? strdup(client_id) : NULL;
-    client->broker_host = strdup(broker_host);
+    client->broker_ip = strdup(broker_ip);
     client->broker_port = broker_port;
     client->keepalive = keepalive;
     client->def_sub_topic = NULL;
@@ -213,7 +215,7 @@ void cbox_mqtt_client_delete(cbox_mqtt_client_t *client)
     CBOX_SAFETY_FUNC(mosquitto_destroy, client->mosquitto_instance);
 
     CBOX_SAFETY_FREE(client->client_id);
-    CBOX_SAFETY_FREE(client->broker_host);
+    CBOX_SAFETY_FREE(client->broker_ip);
     CBOX_SAFETY_FREE(client->def_sub_topic);
 
 
@@ -282,24 +284,63 @@ CLEANUP:
     return -1;
 }
 
+struct mqtt_connect_async_task_param
+{
+    int rc;
+    cbox_mqtt_client_t *mqtt;
+};
+
+static void mqtt_connect_async_task_done(void *arg)
+{
+    int ret = -1, rc = -1;
+    struct mqtt_connect_async_task_param *param = (struct mqtt_connect_async_task_param *)arg;
+    if (!param || param->mqtt == NULL)
+        return;
+
+    rc = param->rc;
+    mqtt_handle_return(param->mqtt, rc);
+
+    if (rc <= MOSQ_ERR_SUCCESS) {
+        ret = mqtt_assign_event_loop(param->mqtt);
+        if (ret != 0) {
+            LOGE("mqtt_assign_event_loop(), failed: %d\n", ret);
+            mqtt_trigger_reconnect(param->mqtt, false);
+        }
+    }
+
+    CBOX_SAFETY_FREE(param);
+}
+
+static void mqtt_connect_async_task(void *arg)
+{
+    int rc = -1;
+    struct mqtt_connect_async_task_param *param = (struct mqtt_connect_async_task_param *)arg;
+    if (!param || param->mqtt == NULL)
+        return;
+
+    rc = mosquitto_connect_async(param->mqtt->mosquitto_instance, param->mqtt->broker_ip, param->mqtt->broker_port, param->mqtt->keepalive);
+    param->rc = rc;
+    cbox_loop_delegate(param->mqtt->loop, mqtt_connect_async_task_done, param);
+}
+
 static int mqtt_proc_reconnect(cbox_mqtt_client_t *mqtt)
 {
     LOGI("try to reconnect...");
-    int rc = 0, ret = -1;
+    int rc = 0;
     rc = mosquitto_reconnect_async(mqtt->mosquitto_instance);
     if (MOSQ_ERR_INVAL == rc) {
         /* Not initialed and try connect again*/
-        rc = mosquitto_connect_async(mqtt->mosquitto_instance, mqtt->broker_host, mqtt->broker_port, mqtt->keepalive);
-    }
+        struct mqtt_connect_async_task_param *param = (struct mqtt_connect_async_task_param *)malloc(sizeof(struct mqtt_connect_async_task_param));
 
-    mqtt_handle_return(mqtt, rc);
+        assert(param != NULL);
+        if (param == NULL)
+            return -1;
 
-    if (rc <= MOSQ_ERR_SUCCESS) {
-        ret = mqtt_assign_event_loop(mqtt);
-        if (ret != 0) {
-            LOGE("mqtt_assign_event_loop(), failed: %d\n", ret);
-            mqtt_trigger_reconnect(mqtt, false);
-        }
+        param->mqtt = mqtt;
+        param->rc = rc;
+
+        /* Create an new thread to execute mosquitto_connect_async() because of mosquitto_reconnect_async() may be blocking*/
+        cbox_worker_perform_task(mqtt_connect_async_task, param);
     }
 
     return 0;
